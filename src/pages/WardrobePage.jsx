@@ -87,7 +87,7 @@ export default function WardrobePage() {
           <input placeholder="Rechercher..." value={search} onChange={e => setSearch(e.target.value)} style={{ flex: 1 }} />
           <label style={{ display: 'inline-flex', alignItems: 'center', padding: '10px 16px', borderRadius: 24, background: 'var(--accent)', color: '#0C0C0F', fontSize: 13, fontWeight: 600, cursor: 'pointer', whiteSpace: 'nowrap' }}>
             + Photo
-            <input type="file" multiple accept="image/*" style={{ display: 'none' }} onChange={e => processFiles(e.target.files)} />
+            <input type="file" multiple accept="image/*,.heic,.heif" style={{ display: 'none' }} onChange={e => processFiles(e.target.files)} />
           </label>
         </div>
         <div style={{ display: 'flex', gap: 6, overflowX: 'auto', paddingBottom: 8 }}>
