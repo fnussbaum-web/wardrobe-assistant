@@ -1,5 +1,5 @@
 export async function analyzeClothing(base64Image) {
-  const res = await fetch('https://api.anthropic.com/v1/messages', {
+  const res = await fetch('/api/analyze', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
@@ -11,18 +11,7 @@ export async function analyzeClothing(base64Image) {
           { type: 'image', source: { type: 'base64', media_type: 'image/jpeg', data: base64Image } },
           {
             type: 'text',
-            text: `Analyse ce vetement et reponds UNIQUEMENT en JSON valide sans markdown:
-{
-  "name": "nom court (ex: T-shirt blanc col rond)",
-  "category": "Hauts | Bas | Vestes | Chaussures | Ceintures | Accessoires",
-  "subcategory": "type precis (ex: T-shirt, Jean, Sneakers, Blazer...)",
-  "colors": ["couleur1", "couleur2"],
-  "style": "casual | smart-casual | formel | sport | streetwear",
-  "season": ["printemps", "ete", "automne", "hiver"],
-  "description": "description courte en francais max 20 mots",
-  "tags": ["tag1", "tag2", "tag3"],
-  "brand": "marque si visible sinon null"
-}`
+            text: 'Analyse ce vetement et reponds UNIQUEMENT en JSON valide sans markdown: { "name": "nom court", "category": "Hauts | Bas | Vestes | Chaussures | Ceintures | Accessoires", "subcategory": "type precis", "colors": ["couleur1"], "style": "casual | smart-casual | formel | sport | streetwear", "season": ["printemps", "ete", "automne", "hiver"], "description": "description courte max 20 mots", "tags": ["tag1"], "brand": "marque si visible sinon null" }'
           }
         ]
       }]
@@ -43,7 +32,7 @@ export async function generateOutfits(items, context = {}) {
     context.weather ? `Meteo: ${context.weather.temp}C, ${context.weather.condition}` : '',
     context.occasion ? `Occasion souhaitee: ${context.occasion}` : '',
   ].filter(Boolean).join(' | ')
-  const res = await fetch('https://api.anthropic.com/v1/messages', {
+  const res = await fetch('/api/analyze', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
@@ -51,7 +40,7 @@ export async function generateOutfits(items, context = {}) {
       max_tokens: 2000,
       messages: [{
         role: 'user',
-        content: `Tu es un styliste expert. ${contextStr}\n\nGarde-robe disponible:\n${desc}\n\nCree 3 tenues coherentes. Reponds UNIQUEMENT en JSON valide sans markdown:\n[\n  {\n    "name": "Nom de la tenue",\n    "occasion": "occasion precise",\n    "vibe": "mot ambiance",\n    "reasoning": "explication courte max 25 mots",\n    "item_ids": ["uuid1", "uuid2"]\n  }\n]`
+        content: 'Tu es un styliste expert. ' + contextStr + '\n\nGarde-robe disponible:\n' + desc + '\n\nCree 3 tenues coherentes. Reponds UNIQUEMENT en JSON valide sans markdown:\n[\n  {\n    "name": "Nom de la tenue",\n    "occasion": "occasion precise",\n    "vibe": "mot ambiance",\n    "reasoning": "explication courte max 25 mots",\n    "item_ids": ["uuid1", "uuid2"]\n  }\n]'
       }]
     })
   })
@@ -65,7 +54,7 @@ export async function getWeather(city) {
   if (!apiKey || !city) return null
   try {
     const res = await fetch(
-      `https://api.openweathermap.org/data/2.5/weather?q=${encodeURIComponent(city)}&appid=${apiKey}&units=metric&lang=fr`
+      'https://api.openweathermap.org/data/2.5/weather?q=' + encodeURIComponent(city) + '&appid=' + apiKey + '&units=metric&lang=fr'
     )
     const data = await res.json()
     if (data.cod !== 200) return null
