@@ -1,4 +1,4 @@
-﻿import { useState, useEffect, useRef, useCallback } from 'react'
+import { useState, useEffect, useRef, useCallback } from 'react'
 import { useAuth } from '../hooks/useAuth'
 import { getItems, addItem, updateItem, deleteItem } from '../lib/supabase'
 import { analyzeClothing, resizeImage, blobToBase64 } from '../lib/ai'

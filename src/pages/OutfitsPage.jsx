@@ -1,4 +1,4 @@
-﻿import { useState, useEffect } from 'react'
+import { useState, useEffect } from 'react'
 import { useAuth } from '../hooks/useAuth'
 import { getOutfits, getItems, saveOutfit, deleteOutfit, toggleFavoriteOutfit } from '../lib/supabase'
 import { generateOutfits } from '../lib/ai'

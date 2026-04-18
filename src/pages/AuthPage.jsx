@@ -1,4 +1,4 @@
-﻿import { useState } from 'react'
+import { useState } from 'react'
 import { signIn, signUp } from '../lib/supabase'
 
 export default function AuthPage() {

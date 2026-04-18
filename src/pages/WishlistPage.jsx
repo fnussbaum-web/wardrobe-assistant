@@ -1,4 +1,4 @@
-﻿import { useState, useEffect } from 'react'
+import { useState, useEffect } from 'react'
 import { useAuth } from '../hooks/useAuth'
 import { getWishlist, addWishlistItem, updateWishlistItem, deleteWishlistItem } from '../lib/supabase'
 

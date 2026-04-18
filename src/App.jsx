@@ -1,4 +1,4 @@
-﻿import { Routes, Route, Navigate } from 'react-router-dom'
+import { Routes, Route, Navigate } from 'react-router-dom'
 import { useAuth } from './hooks/useAuth'
 import AuthPage from './pages/AuthPage'
 import WardrobePage from './pages/WardrobePage'
