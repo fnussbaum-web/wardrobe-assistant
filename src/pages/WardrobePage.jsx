@@ -165,7 +165,7 @@ export default function WardrobePage() {
 
 function ItemModal({ item, onClose, onStatusChange, onDelete, onUpdate }) {
   const [editing, setEditing] = useState(false)
-  const [form, setForm] = useState({ name: item.name, brand: item.brand || '', notes: item.notes || '' })
+  const [form, setForm] = useState({ name: item.name, brand: item.brand || '', notes: item.notes || '', category: item.category || 'Hauts', style: item.style || 'casual' })
 
   async function save() {
     await onUpdate(form)
@@ -182,7 +182,13 @@ function ItemModal({ item, onClose, onStatusChange, onDelete, onUpdate }) {
             {editing ? (
               <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
                 <input value={form.name} onChange={e => setForm(f => ({ ...f, name: e.target.value }))} />
-                <input value={form.brand} placeholder="Marque" onChange={e => setForm(f => ({ ...f, brand: e.target.value }))} />
+<select value={form.category} onChange={e => setForm(f => ({ ...f, category: e.target.value }))}>
+  {['Hauts','Bas','Vestes','Chaussures','Ceintures','Accessoires'].map(c => <option key={c} value={c}>{c}</option>)}
+</select>
+<select value={form.style} onChange={e => setForm(f => ({ ...f, style: e.target.value }))}>
+  {['casual','smart-casual','formel','sport','streetwear'].map(s => <option key={s} value={s}>{s}</option>)}
+</select>
+<input value={form.brand} placeholder="Marque" onChange={e => setForm(f => ({ ...f, brand: e.target.value }))} />
                 <textarea value={form.notes} placeholder="Notes" rows={2} onChange={e => setForm(f => ({ ...f, notes: e.target.value }))} style={{ resize: 'none' }} />
                 <div style={{ display: 'flex', gap: 8 }}>
                   <button onClick={save} className="btn btn-primary" style={{ flex: 1, padding: '8px' }}>Sauver</button>
