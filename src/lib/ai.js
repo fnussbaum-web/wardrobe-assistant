@@ -11,7 +11,7 @@ export async function analyzeClothing(base64Image) {
           { type: 'image', source: { type: 'base64', media_type: 'image/jpeg', data: base64Image } },
           {
             type: 'text',
-            text: 'Analyse ce vetement et reponds UNIQUEMENT en JSON valide sans markdown: { "name": "nom court", "category": "Hauts | Bas | Vestes | Chaussures | Ceintures | Accessoires", "subcategory": "type precis", "colors": ["couleur1"], "style": "casual | smart-casual | formel | sport | streetwear", "season": ["printemps", "ete", "automne", "hiver"], "description": "description courte max 20 mots", "tags": ["tag1"], "brand": "marque si visible sinon null" }'
+            text: 'Analyse ce vetement et reponds UNIQUEMENT en JSON valide sans markdown. Regles strictes pour la categorie: Hauts=tshirt/chemise/pull/sweat/veste interieure, Bas=pantalon/jean/short/jupe, Vestes=veste/manteau/blouson/pardessus, Chaussures=toutes chaussures/baskets/bottes, Ceintures=ceinture/bretelles, Accessoires=tout le reste. Format: { "name": "nom court precis", "category": "Hauts | Bas | Vestes | Chaussures | Ceintures | Accessoires", "subcategory": "type precis ex: Jean slim, Polo, Sneakers", "colors": ["couleur1", "couleur2"], "style": "casual | smart-casual | formel | sport | streetwear", "season": ["printemps", "ete", "automne", "hiver"], "description": "description courte max 20 mots", "tags": ["tag1", "tag2"], "brand": "marque si visible sinon null" }'
           }
         ]
       }]
