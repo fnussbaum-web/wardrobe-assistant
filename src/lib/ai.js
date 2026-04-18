@@ -26,11 +26,11 @@ export async function generateOutfits(items, context = {}) {
   const available = items.filter(i => i.status === 'available')
   if (available.length < 2) return []
   const desc = available.map((item, i) =>
-    `[${i}] id:${item.id} | ${item.name} (${item.category}/${item.subcategory || ''}, style:${item.style}, couleurs:${item.colors?.join(',')}, saisons:${item.season?.join(',')})`
+    '[' + i + '] id:' + item.id + ' | ' + item.name + ' (' + item.category + '/' + (item.subcategory || '') + ', style:' + item.style + ', couleurs:' + item.colors?.join(',') + ', saisons:' + item.season?.join(',') + ')'
   ).join('\n')
   const contextStr = [
-    context.weather ? `Meteo: ${context.weather.temp}C, ${context.weather.condition}` : '',
-    context.occasion ? `Occasion souhaitee: ${context.occasion}` : '',
+    context.weather ? 'Meteo: ' + context.weather.temp + 'C, ' + context.weather.condition : '',
+    context.occasion ? 'Occasion souhaitee: ' + context.occasion : '',
   ].filter(Boolean).join(' | ')
   const res = await fetch('/api/analyze', {
     method: 'POST',
@@ -81,6 +81,24 @@ export function resizeImage(file, maxSize = 1024) {
       canvas.getContext('2d').drawImage(img, 0, 0, w, h)
       URL.revokeObjectURL(url)
       canvas.toBlob(blob => resolve(blob), 'image/jpeg', 0.85)
+    }
+    img.onerror = () => {
+      URL.revokeObjectURL(url)
+      const img2 = new Image()
+      const reader = new FileReader()
+      reader.onload = (e) => {
+        img2.onload = () => {
+          let w = img2.width || 800, h = img2.height || 600
+          if (w > h && w > maxSize) { h = (h * maxSize) / w; w = maxSize }
+          else if (h > maxSize) { w = (w * maxSize) / h; h = maxSize }
+          const canvas = document.createElement('canvas')
+          canvas.width = w; canvas.height = h
+          canvas.getContext('2d').drawImage(img2, 0, 0, w, h)
+          canvas.toBlob(blob => resolve(blob), 'image/jpeg', 0.85)
+        }
+        img2.src = e.target.result
+      }
+      reader.readAsDataURL(file)
     }
     img.src = url
   })
