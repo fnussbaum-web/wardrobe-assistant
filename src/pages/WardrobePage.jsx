@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useCallback } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { useAuth } from '../hooks/useAuth'
 import { getItems, addItem, updateItem, deleteItem } from '../lib/supabase'
 import { analyzeClothing, resizeImage, blobToBase64 } from '../lib/ai'
@@ -20,7 +20,6 @@ export default function WardrobePage() {
   const [search, setSearch] = useState('')
   const [selectedItem, setSelectedItem] = useState(null)
   const [dragOver, setDragOver] = useState(false)
-  const fileRef = useRef()
 
   useEffect(() => { load() }, [user])
 
@@ -36,7 +35,7 @@ export default function WardrobePage() {
     setAnalyzing(true)
     for (const file of Array.from(files)) {
       if (!file.type.startsWith('image/')) continue
-      setStatusMsg(`Analyse de ${file.name}...`)
+      setStatusMsg('Analyse de ' + file.name + '...')
       try {
         const blob = await resizeImage(file)
         const b64 = await blobToBase64(blob)
@@ -68,7 +67,7 @@ export default function WardrobePage() {
   }
 
   async function removeItem(item) {
-    if (!confirm(`Supprimer "${item.name}" ?`)) return
+    if (!confirm('Supprimer "' + item.name + '" ?')) return
     await deleteItem(item)
     setItems(prev => prev.filter(i => i.id !== item.id))
     setSelectedItem(null)
@@ -86,8 +85,10 @@ export default function WardrobePage() {
       <div style={{ padding: '16px 16px 0', flexShrink: 0 }}>
         <div style={{ display: 'flex', gap: 8, marginBottom: 12 }}>
           <input placeholder="Rechercher..." value={search} onChange={e => setSearch(e.target.value)} style={{ flex: 1 }} />
-          <button onClick={() => fileRef.current?.click()} className="btn btn-primary" style={{ padding: '10px 16px', whiteSpace: 'nowrap' }}>+ Photo</button>
-          <input ref={fileRef} type="file" multiple accept="image/*" style={{ display: 'none' }} onChange={e => processFiles(e.target.files)} />
+          <label style={{ display: 'inline-flex', alignItems: 'center', padding: '10px 16px', borderRadius: 24, background: 'var(--accent)', color: '#0C0C0F', fontSize: 13, fontWeight: 600, cursor: 'pointer', whiteSpace: 'nowrap' }}>
+            + Photo
+            <input type="file" multiple accept="image/*" style={{ display: 'none' }} onChange={e => processFiles(e.target.files)} />
+          </label>
         </div>
         <div style={{ display: 'flex', gap: 6, overflowX: 'auto', paddingBottom: 8 }}>
           {CATEGORIES.map(cat => (
@@ -126,7 +127,7 @@ export default function WardrobePage() {
         ) : (
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(140px, 1fr))', gap: 12 }}>
             {filtered.map(item => (
-              <div key={item.id} onClick={() => setSelectedItem(item)} style={{ background: 'var(--bg2)', border: `1px solid ${item.status === 'pressing' ? 'rgba(252,211,77,0.3)' : 'var(--border)'}`, borderRadius: 'var(--radius)', overflow: 'hidden', cursor: 'pointer', transition: 'transform 0.15s', opacity: item.status === 'retired' ? 0.5 : 1 }}>
+              <div key={item.id} onClick={() => setSelectedItem(item)} style={{ background: 'var(--bg2)', border: '1px solid ' + (item.status === 'pressing' ? 'rgba(252,211,77,0.3)' : 'var(--border)'), borderRadius: 'var(--radius)', overflow: 'hidden', cursor: 'pointer', transition: 'transform 0.15s', opacity: item.status === 'retired' ? 0.5 : 1 }}>
                 <div style={{ aspectRatio: '3/4', position: 'relative', background: 'var(--bg3)' }}>
                   {item.image_url ? (
                     <img src={item.image_url} alt={item.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
@@ -141,7 +142,7 @@ export default function WardrobePage() {
                   <div style={{ fontSize: 12, fontWeight: 500, marginBottom: 3, lineHeight: 1.3 }}>{item.name}</div>
                   <div style={{ display: 'flex', gap: 4, flexWrap: 'wrap' }}>
                     {item.colors?.slice(0, 1).map(c => (<span key={c} style={{ fontSize: 10, color: 'var(--text3)', background: 'var(--bg3)', borderRadius: 4, padding: '1px 5px' }}>{c}</span>))}
-                    {item.style && <span className={`tag style-${item.style}`} style={{ fontSize: 10, padding: '1px 5px' }}>{item.style}</span>}
+                    {item.style && <span className={'tag style-' + item.style} style={{ fontSize: 10, padding: '1px 5px' }}>{item.style}</span>}
                   </div>
                 </div>
               </div>
@@ -193,12 +194,12 @@ function ItemModal({ item, onClose, onStatusChange, onDelete, onUpdate }) {
                 <div style={{ fontFamily: 'Fraunces', fontSize: 18, fontWeight: 300, marginBottom: 4 }}>{item.name}</div>
                 {item.brand && <div style={{ fontSize: 12, color: 'var(--text3)', marginBottom: 6 }}>{item.brand}</div>}
                 <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginBottom: 8 }}>
-                  <span className={`tag status-${item.status}`}>{STATUS_ICONS[item.status]} {STATUS_LABELS[item.status]}</span>
-                  {item.style && <span className={`tag style-${item.style}`}>{item.style}</span>}
+                  <span className={'tag status-' + item.status}>{STATUS_ICONS[item.status]} {STATUS_LABELS[item.status]}</span>
+                  {item.style && <span className={'tag style-' + item.style}>{item.style}</span>}
                 </div>
                 {item.colors?.length > 0 && <div style={{ fontSize: 12, color: 'var(--text2)' }}>🎨 {item.colors.join(', ')}</div>}
                 {item.season?.length > 0 && <div style={{ fontSize: 12, color: 'var(--text2)' }}>🌡️ {item.season.join(', ')}</div>}
-                <div style={{ fontSize: 12, color: 'var(--text3)', marginTop: 4 }}>Porte {item.times_worn} fois{item.last_worn_at && ` · Dernier: ${new Date(item.last_worn_at).toLocaleDateString('fr-CH')}`}</div>
+                <div style={{ fontSize: 12, color: 'var(--text3)', marginTop: 4 }}>Porte {item.times_worn} fois</div>
                 {item.notes && <div style={{ fontSize: 12, color: 'var(--text2)', marginTop: 4, fontStyle: 'italic' }}>{item.notes}</div>}
                 <button onClick={() => setEditing(true)} className="btn btn-ghost" style={{ marginTop: 8, padding: '5px 12px', fontSize: 12 }}>Modifier</button>
               </>
@@ -207,7 +208,7 @@ function ItemModal({ item, onClose, onStatusChange, onDelete, onUpdate }) {
         </div>
         <div style={{ display: 'flex', gap: 8, marginBottom: 12 }}>
           {STATUSES.map(s => (
-            <button key={s} onClick={() => onStatusChange(item, s)} className={`btn ${item.status === s ? 'btn-primary' : 'btn-ghost'}`} style={{ flex: 1, padding: '8px 4px', fontSize: 11 }}>
+            <button key={s} onClick={() => onStatusChange(item, s)} className={'btn ' + (item.status === s ? 'btn-primary' : 'btn-ghost')} style={{ flex: 1, padding: '8px 4px', fontSize: 11 }}>
               {STATUS_ICONS[s]} {STATUS_LABELS[s]}
             </button>
           ))}
