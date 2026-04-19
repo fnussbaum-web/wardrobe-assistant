@@ -29,7 +29,7 @@ export async function addItem(userId, item, imageFile) {
   let image_path = null
   if (imageFile) {
     const ext = 'jpg'
-    const path = `${userId}/${Date.now()}.${ext}`
+    const path = userId + '/' + Date.now() + '.' + ext
     const { error: uploadError } = await supabase.storage
       .from('clothing-images')
       .upload(path, imageFile, { contentType: 'image/jpeg' })
@@ -145,4 +145,18 @@ export async function getStats(userId) {
     history: historyRes.data || [],
     outfits: outfitsRes.data || []
   }
+}
+
+export async function getColorCombinations(userId) {
+  const { data, error } = await supabase.from('color_combinations').select('*').eq('user_id', userId)
+  if (error) throw error
+  return data || []
+}
+
+export async function saveColorCombination(userId, color, compatibleColors) {
+  const { data, error } = await supabase.from('color_combinations')
+    .upsert({ user_id: userId, color, compatible_colors: compatibleColors, updated_at: new Date().toISOString() }, { onConflict: 'user_id,color' })
+    .select().single()
+  if (error) throw error
+  return data
 }
