@@ -4,7 +4,7 @@ import AuthPage from './pages/AuthPage'
 import WardrobePage from './pages/WardrobePage'
 import OutfitsPage from './pages/OutfitsPage'
 import TodayPage from './pages/TodayPage'
-import HistoryPage from './pages/HistoryPage'
+import JournalPage from './pages/JournalPage'
 import StatsPage from './pages/StatsPage'
 import WishlistPage from './pages/WishlistPage'
 import ColorsPage from './pages/ColorsPage'
@@ -25,7 +25,7 @@ export default function App() {
         <Route path="/today" element={<TodayPage />} />
         <Route path="/wardrobe" element={<WardrobePage />} />
         <Route path="/outfits" element={<OutfitsPage />} />
-        <Route path="/history" element={<HistoryPage />} />
+        <Route path="/journal" element={<JournalPage />} />
         <Route path="/stats" element={<StatsPage />} />
         <Route path="/wishlist" element={<WishlistPage />} />
         <Route path="/colors" element={<ColorsPage />} />
