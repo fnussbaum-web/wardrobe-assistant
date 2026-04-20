@@ -7,6 +7,7 @@ import TodayPage from './pages/TodayPage'
 import HistoryPage from './pages/HistoryPage'
 import StatsPage from './pages/StatsPage'
 import WishlistPage from './pages/WishlistPage'
+import ColorsPage from './pages/ColorsPage'
 import Layout from './components/Layout'
 
 export default function App() {
@@ -27,6 +28,7 @@ export default function App() {
         <Route path="/history" element={<HistoryPage />} />
         <Route path="/stats" element={<StatsPage />} />
         <Route path="/wishlist" element={<WishlistPage />} />
+        <Route path="/colors" element={<ColorsPage />} />
         <Route path="*" element={<Navigate to="/today" replace />} />
       </Routes>
     </Layout>
