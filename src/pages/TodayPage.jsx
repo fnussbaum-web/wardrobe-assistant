@@ -102,9 +102,12 @@ export default function TodayPage() {
 
   // Filtered outfits for saved mode
   const filteredOutfits = outfits.filter(outfit => {
-    const outfitItems = (outfit.item_ids || []).map(id => items.find(i => i.id === id)).filter(Boolean);
-    return outfitItems.every(i => i.status === "available");
-  });
+  const outfitItems = (outfit.item_ids || []).map(id => items.find(i => i.id === id)).filter(Boolean);
+  if (!outfitItems.every(i => i.status === "available")) return false;
+  const occasions = outfit.occasions?.length ? outfit.occasions : (outfit.occasion ? [outfit.occasion] : []);
+  if (occasions.length === 0) return true;
+  return occasions.includes(occasion);
+});
 
   // Compatible items for compose mode
   function getCompatibleItems(category) {
