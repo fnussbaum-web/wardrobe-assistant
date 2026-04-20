@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { useAuth } from "../hooks/useAuth";
-import { getItems, getOutfits, logOutfit, saveOutfit } from "../lib/supabase";
-import { getWeather, getColorCombinations } from "../lib/supabase";
+import { getItems, getOutfits, logOutfit, saveOutfit, getColorCombinations } from "../lib/supabase";
+import { getWeather } from "../lib/ai";
 
 const OCCASIONS = ["Casual", "Bureau", "Sport", "Soiree", "Weekend", "Voyage"];
 const CATEGORIES_ORDER = ["Hauts", "Bas", "Chaussures", "Vestes", "Ceintures", "Accessoires", "Sport"];
