@@ -25,10 +25,9 @@ const STYLE_COMPAT = {
 
 function isColorCompatible(colors1, colors2, combinations) {
   if (!colors1?.length || !colors2?.length) return true;
-  const neutrals = ["Noir", "Blanc", "Gris", "Beige", "Navy"];
-  if (colors1.some(c => neutrals.includes(c)) || colors2.some(c => neutrals.includes(c))) return true;
   for (const c1 of colors1) {
     const compat = combinations[c1] || [];
+    if (compat.length === 0) return true;
     if (colors2.some(c2 => compat.includes(c2))) return true;
   }
   return false;
