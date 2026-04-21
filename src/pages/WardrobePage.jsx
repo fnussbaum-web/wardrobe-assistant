@@ -12,6 +12,13 @@ const CAT_ICONS = { Hauts: '👕', Bas: '👖', Vestes: '🧥', Chaussures: '�
 const STYLES = ['casual', 'smart-casual', 'formel', 'sport', 'streetwear']
 const SEASONS = ['printemps', 'ete', 'automne', 'hiver']
 const COLORS = ['Noir', 'Blanc', 'Gris', 'Beige', 'Navy', 'Bleu', 'Rouge', 'Vert', 'Marron', 'Jaune', 'Orange', 'Rose', 'Violet', 'Kaki']
+const COLOR_SWATCHES = {
+  'Noir': '#1a1a1a', 'Blanc': '#f0f0f0', 'Gris': '#888',
+  'Beige': '#C9B99A', 'Navy': '#1B2A4A', 'Bleu': '#4A90D9',
+  'Rouge': '#D94A4A', 'Vert': '#4A9D6F', 'Marron': '#8B5E3C',
+  'Jaune': '#F5C842', 'Orange': '#F5894A', 'Rose': '#F5A0C0',
+  'Violet': '#9B7FD4', 'Kaki': '#7D8C5A'
+}
 
 export default function WardrobePage() {
   const { user } = useAuth()
@@ -63,7 +70,7 @@ export default function WardrobePage() {
       } catch (e) { console.error(e) }
       setStatusMsg('')
       setAnalyzing(false)
-      break // une photo à la fois pour la confirmation
+      break
     }
   }, [user])
 
@@ -165,11 +172,16 @@ export default function WardrobePage() {
                   )}
                 </div>
                 <div style={{ padding: '8px 10px 10px' }}>
-                  <div style={{ fontSize: 12, fontWeight: 500, marginBottom: 3, lineHeight: 1.3 }}>{item.name}</div>
-                  <div style={{ display: 'flex', gap: 4, flexWrap: 'wrap' }}>
-                    {item.colors?.slice(0, 1).map(c => (<span key={c} style={{ fontSize: 10, color: 'var(--text3)', background: 'var(--bg3)', borderRadius: 4, padding: '1px 5px' }}>{c}</span>))}
-                    {item.style && <span className={'tag style-' + item.style} style={{ fontSize: 10, padding: '1px 5px' }}>{item.style}</span>}
+                  <div style={{ fontSize: 12, fontWeight: 500, marginBottom: 4, lineHeight: 1.3 }}>{item.name}</div>
+                  <div style={{ display: 'flex', gap: 4, flexWrap: 'wrap', alignItems: 'center', marginBottom: 3 }}>
+                    {item.colors?.slice(0, 3).map(c => (
+                      <div key={c} style={{ display: 'flex', alignItems: 'center', gap: 3, background: 'var(--bg3)', borderRadius: 6, padding: '2px 6px' }}>
+                        <div style={{ width: 8, height: 8, borderRadius: '50%', background: COLOR_SWATCHES[c] || '#888', flexShrink: 0 }} />
+                        <span style={{ fontSize: 10, color: 'var(--text2)' }}>{c}</span>
+                      </div>
+                    ))}
                   </div>
+                  {item.style && <span className={'tag style-' + item.style} style={{ fontSize: 10, padding: '1px 5px' }}>{item.style}</span>}
                 </div>
               </div>
             ))}
@@ -259,8 +271,9 @@ function ConfirmModal({ item, onConfirm, onCancel }) {
           <div style={{ fontSize: 12, color: 'var(--text2)', marginBottom: 6 }}>Couleurs</div>
           <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
             {COLORS.map(c => (
-              <button key={c} onClick={() => toggleColor(c)} style={{ padding: '6px 12px', borderRadius: 20, border: '1px solid', borderColor: form.colors.includes(c) ? 'var(--accent)' : 'var(--border2)', background: form.colors.includes(c) ? 'var(--accent-dim)' : 'transparent', color: form.colors.includes(c) ? 'var(--accent)' : 'var(--text3)', fontSize: 12, cursor: 'pointer' }}>
-                {c}
+              <button key={c} onClick={() => toggleColor(c)} style={{ display: 'flex', alignItems: 'center', gap: 4, padding: '5px 10px', borderRadius: 20, border: '1px solid', borderColor: form.colors.includes(c) ? 'var(--accent)' : 'var(--border2)', background: form.colors.includes(c) ? 'var(--accent-dim)' : 'transparent', cursor: 'pointer' }}>
+                <div style={{ width: 10, height: 10, borderRadius: '50%', background: COLOR_SWATCHES[c] || '#888' }} />
+                <span style={{ fontSize: 11, color: form.colors.includes(c) ? 'var(--accent)' : 'var(--text3)' }}>{c}</span>
               </button>
             ))}
           </div>
@@ -290,13 +303,28 @@ function ConfirmModal({ item, onConfirm, onCancel }) {
 
 function ItemModal({ item, onClose, onStatusChange, onDelete, onUpdate }) {
   const [editing, setEditing] = useState(false)
-  const [form, setForm] = useState({ name: item.name, brand: item.brand || '', notes: item.notes || '', category: item.category || 'Hauts', style: item.style || 'casual' })
+  const [form, setForm] = useState({
+    name: item.name,
+    brand: item.brand || '',
+    notes: item.notes || '',
+    category: item.category || 'Hauts',
+    style: item.style || 'casual',
+    colors: item.colors || [],
+    season: item.season || []
+  })
 
   function toggleColor(c) {
-    const colors = (item.colors || []).includes(c)
-      ? (item.colors || []).filter(x => x !== c)
-      : [...(item.colors || []), c]
-    onUpdate({ colors })
+    setForm(f => {
+      const colors = f.colors.includes(c) ? f.colors.filter(x => x !== c) : [...f.colors, c]
+      return { ...f, colors }
+    })
+  }
+
+  function toggleSeason(s) {
+    setForm(f => {
+      const season = f.season.includes(s) ? f.season.filter(x => x !== s) : [...f.season, s]
+      return { ...f, season }
+    })
   }
 
   async function save() {
@@ -306,21 +334,61 @@ function ItemModal({ item, onClose, onStatusChange, onDelete, onUpdate }) {
 
   return (
     <div style={{ position: 'fixed', inset: 0, zIndex: 200, background: 'rgba(0,0,0,0.8)', backdropFilter: 'blur(4px)', display: 'flex', alignItems: 'flex-end' }} onClick={onClose}>
-      <div onClick={e => e.stopPropagation()} style={{ background: 'var(--bg2)', borderRadius: '20px 20px 0 0', border: '1px solid var(--border)', width: '100%', maxHeight: '85dvh', overflowY: 'auto', padding: '20px' }}>
+      <div onClick={e => e.stopPropagation()} style={{ background: 'var(--bg2)', borderRadius: '20px 20px 0 0', border: '1px solid var(--border)', width: '100%', maxHeight: '90dvh', overflowY: 'auto', padding: '20px' }}>
         <div style={{ width: 40, height: 4, borderRadius: 2, background: 'var(--border2)', margin: '0 auto 16px' }} />
         <div style={{ display: 'flex', gap: 16, marginBottom: 16 }}>
           {item.image_url && <img src={item.image_url} alt={item.name} style={{ width: 100, height: 130, objectFit: 'cover', borderRadius: 10, flexShrink: 0 }} />}
           <div style={{ flex: 1 }}>
             {editing ? (
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-                <input value={form.name} onChange={e => setForm(f => ({ ...f, name: e.target.value }))} />
-                <select value={form.category} onChange={e => setForm(f => ({ ...f, category: e.target.value }))}>
-                  {CATEGORIES.map(c => <option key={c} value={c}>{c}</option>)}
-                </select>
-                <select value={form.style} onChange={e => setForm(f => ({ ...f, style: e.target.value }))}>
-                  {STYLES.map(s => <option key={s} value={s}>{s}</option>)}
-                </select>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+                <input value={form.name} onChange={e => setForm(f => ({ ...f, name: e.target.value }))} placeholder="Nom" />
                 <input value={form.brand} placeholder="Marque" onChange={e => setForm(f => ({ ...f, brand: e.target.value }))} />
+
+                <div>
+                  <div style={{ fontSize: 11, color: 'var(--text3)', marginBottom: 5 }}>Catégorie</div>
+                  <div style={{ display: 'flex', gap: 4, flexWrap: 'wrap' }}>
+                    {CATEGORIES.map(c => (
+                      <button key={c} onClick={() => setForm(f => ({ ...f, category: c }))} style={{ padding: '4px 8px', borderRadius: 12, border: '1px solid', borderColor: form.category === c ? 'var(--accent)' : 'var(--border2)', background: form.category === c ? 'var(--accent-dim)' : 'transparent', color: form.category === c ? 'var(--accent)' : 'var(--text3)', fontSize: 11, cursor: 'pointer' }}>
+                        {CAT_ICONS[c]} {c}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                <div>
+                  <div style={{ fontSize: 11, color: 'var(--text3)', marginBottom: 5 }}>Style</div>
+                  <div style={{ display: 'flex', gap: 4, flexWrap: 'wrap' }}>
+                    {STYLES.map(s => (
+                      <button key={s} onClick={() => setForm(f => ({ ...f, style: s }))} style={{ padding: '4px 8px', borderRadius: 12, border: '1px solid', borderColor: form.style === s ? 'var(--accent)' : 'var(--border2)', background: form.style === s ? 'var(--accent-dim)' : 'transparent', color: form.style === s ? 'var(--accent)' : 'var(--text3)', fontSize: 11, cursor: 'pointer' }}>
+                        {s}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                <div>
+                  <div style={{ fontSize: 11, color: 'var(--text3)', marginBottom: 5 }}>Couleurs</div>
+                  <div style={{ display: 'flex', gap: 4, flexWrap: 'wrap' }}>
+                    {COLORS.map(c => (
+                      <button key={c} onClick={() => toggleColor(c)} style={{ display: 'flex', alignItems: 'center', gap: 3, padding: '3px 7px', borderRadius: 10, border: '1px solid', borderColor: form.colors.includes(c) ? 'var(--accent)' : 'var(--border2)', background: form.colors.includes(c) ? 'var(--accent-dim)' : 'transparent', cursor: 'pointer' }}>
+                        <div style={{ width: 8, height: 8, borderRadius: '50%', background: COLOR_SWATCHES[c] || '#888' }} />
+                        <span style={{ fontSize: 10, color: form.colors.includes(c) ? 'var(--accent)' : 'var(--text3)' }}>{c}</span>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                <div>
+                  <div style={{ fontSize: 11, color: 'var(--text3)', marginBottom: 5 }}>Saisons</div>
+                  <div style={{ display: 'flex', gap: 4, flexWrap: 'wrap' }}>
+                    {SEASONS.map(s => (
+                      <button key={s} onClick={() => toggleSeason(s)} style={{ padding: '3px 7px', borderRadius: 10, border: '1px solid', borderColor: form.season.includes(s) ? 'var(--accent)' : 'var(--border2)', background: form.season.includes(s) ? 'var(--accent-dim)' : 'transparent', color: form.season.includes(s) ? 'var(--accent)' : 'var(--text3)', fontSize: 11, cursor: 'pointer' }}>
+                        {s}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
                 <textarea value={form.notes} placeholder="Notes" rows={2} onChange={e => setForm(f => ({ ...f, notes: e.target.value }))} style={{ resize: 'none' }} />
                 <div style={{ display: 'flex', gap: 8 }}>
                   <button onClick={save} className="btn btn-primary" style={{ flex: 1, padding: '8px' }}>Sauver</button>
@@ -335,11 +403,20 @@ function ItemModal({ item, onClose, onStatusChange, onDelete, onUpdate }) {
                   <span className={'tag status-' + item.status}>{STATUS_ICONS[item.status]} {STATUS_LABELS[item.status]}</span>
                   {item.style && <span className={'tag style-' + item.style}>{item.style}</span>}
                 </div>
-                {item.colors?.length > 0 && <div style={{ fontSize: 12, color: 'var(--text2)', marginBottom: 4 }}>🎨 {item.colors.join(', ')}</div>}
+                {item.colors?.length > 0 && (
+                  <div style={{ display: 'flex', gap: 4, flexWrap: 'wrap', marginBottom: 6 }}>
+                    {item.colors.map(c => (
+                      <div key={c} style={{ display: 'flex', alignItems: 'center', gap: 4, background: 'var(--bg3)', borderRadius: 8, padding: '3px 8px' }}>
+                        <div style={{ width: 10, height: 10, borderRadius: '50%', background: COLOR_SWATCHES[c] || '#888' }} />
+                        <span style={{ fontSize: 11, color: 'var(--text2)' }}>{c}</span>
+                      </div>
+                    ))}
+                  </div>
+                )}
                 {item.season?.length > 0 && <div style={{ fontSize: 12, color: 'var(--text2)', marginBottom: 4 }}>🌡️ {item.season.join(', ')}</div>}
-                <div style={{ fontSize: 12, color: 'var(--text3)', marginTop: 4 }}>Porte {item.times_worn} fois</div>
+                <div style={{ fontSize: 12, color: 'var(--text3)', marginTop: 4 }}>Porté {item.times_worn} fois</div>
                 {item.notes && <div style={{ fontSize: 12, color: 'var(--text2)', marginTop: 4, fontStyle: 'italic' }}>{item.notes}</div>}
-                <button onClick={() => setEditing(true)} className="btn btn-ghost" style={{ marginTop: 8, padding: '5px 12px', fontSize: 12 }}>Modifier</button>
+                <button onClick={() => setEditing(true)} className="btn btn-ghost" style={{ marginTop: 8, padding: '5px 12px', fontSize: 12 }}>✏️ Modifier</button>
               </>
             )}
           </div>
@@ -351,7 +428,7 @@ function ItemModal({ item, onClose, onStatusChange, onDelete, onUpdate }) {
             </button>
           ))}
         </div>
-        <button onClick={() => onDelete(item)} className="btn btn-danger" style={{ width: '100%', padding: '10px' }}>🗑️ Supprimer ce vetement</button>
+        <button onClick={() => onDelete(item)} className="btn btn-danger" style={{ width: '100%', padding: '10px' }}>🗑️ Supprimer ce vêtement</button>
       </div>
     </div>
   )
