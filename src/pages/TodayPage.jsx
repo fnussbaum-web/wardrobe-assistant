@@ -51,17 +51,16 @@ export default function TodayPage() {
   const [colorCombinations, setColorCombinations] = useState({});
   const [weather, setWeather] = useState(null);
   const [occasion, setOccasion] = useState("Casual");
-  const [mode, setMode] = useState("saved"); // saved | compose
+  const [mode, setMode] = useState("saved");
   const [city, setCity] = useState(profile?.city || "");
   const [editCity, setEditCity] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [saveModalOpen, setSaveModalOpen] = useState(false);
 
-  // Compose mode state
   const [selectedPieces, setSelectedPieces] = useState({});
   const [startCategory, setStartCategory] = useState(null);
   const [currentCategory, setCurrentCategory] = useState(null);
 
-  // Saved mode state
   const [selectedOutfit, setSelectedOutfit] = useState(null);
   const [logged, setLogged] = useState(false);
   const [saved, setSaved] = useState(false);
@@ -97,19 +96,16 @@ export default function TodayPage() {
     setEditCity(false);
   }
 
-  // Available items (not pressing, correct season)
   const available = items.filter(i => i.status === "available" && isSeasonOk(i));
 
-  // Filtered outfits for saved mode
   const filteredOutfits = outfits.filter(outfit => {
-  const outfitItems = (outfit.item_ids || []).map(id => items.find(i => i.id === id)).filter(Boolean);
-  if (!outfitItems.every(i => i.status === "available")) return false;
-  const occasions = outfit.occasions?.length ? outfit.occasions : (outfit.occasion ? [outfit.occasion] : []);
-  if (occasions.length === 0) return true;
-  return occasions.includes(occasion);
-});
+    const outfitItems = (outfit.item_ids || []).map(id => items.find(i => i.id === id)).filter(Boolean);
+    if (!outfitItems.every(i => i.status === "available")) return false;
+    const occasions = outfit.occasions?.length ? outfit.occasions : (outfit.occasion ? [outfit.occasion] : []);
+    if (occasions.length === 0) return true;
+    return occasions.includes(occasion);
+  });
 
-  // Compatible items for compose mode
   function getCompatibleItems(category) {
     const alreadySelected = Object.values(selectedPieces);
     return available.filter(item => {
@@ -125,7 +121,6 @@ export default function TodayPage() {
 
   function selectPiece(category, item) {
     setSelectedPieces(prev => ({ ...prev, [category]: item }));
-    // Move to next category
     const remaining = CATEGORIES_ORDER.filter(c => c !== startCategory && !selectedPieces[c] && c !== category);
     if (remaining.length > 0) setCurrentCategory(remaining[0]);
     else setCurrentCategory(null);
@@ -150,10 +145,20 @@ export default function TodayPage() {
   }
 
   async function saveAsOutfit() {
+    setSaveModalOpen(true);
+  }
+
+  async function confirmSaveOutfit(name, occasions) {
     const itemIds = Object.values(selectedPieces).map(i => i.id);
-    const name = occasion + " — " + new Date().toLocaleDateString("fr-CH", { day: "numeric", month: "short" });
-    await saveOutfit(user.id, { name, occasion, item_ids: itemIds, vibe: occasion });
+    await saveOutfit(user.id, {
+      name,
+      occasion: occasions[0] || occasion,
+      occasions,
+      item_ids: itemIds,
+      vibe: occasions[0] || occasion
+    });
     setSaved(true);
+    setSaveModalOpen(false);
     load();
   }
 
@@ -170,7 +175,6 @@ export default function TodayPage() {
 
   return (
     <div style={{ padding: "16px", maxWidth: 600, margin: "0 auto" }}>
-      {/* Date */}
       <div style={{ marginBottom: 16 }}>
         <div style={{ fontFamily: "Fraunces", fontSize: 22, fontWeight: 300 }}>
           {new Date().toLocaleDateString("fr-CH", { weekday: "long", day: "numeric", month: "long" })}
@@ -178,7 +182,6 @@ export default function TodayPage() {
         <div style={{ fontSize: 13, color: "var(--text3)", marginTop: 2 }}>Que vas-tu porter aujourd'hui ?</div>
       </div>
 
-      {/* Weather */}
       <div className="card" style={{ padding: "12px 14px", marginBottom: 14, display: "flex", alignItems: "center", gap: 12 }}>
         <div style={{ fontSize: 24 }}>{weather ? "🌤️" : "📍"}</div>
         <div style={{ flex: 1 }}>
@@ -201,14 +204,12 @@ export default function TodayPage() {
         )}
       </div>
 
-      {/* Occasion */}
       <div style={{ display: "flex", gap: 6, flexWrap: "wrap", marginBottom: 16 }}>
         {OCCASIONS.map(o => (
           <button key={o} onClick={() => setOccasion(o)} style={{ padding: "6px 12px", borderRadius: 20, border: "1px solid", borderColor: occasion === o ? "var(--accent)" : "var(--border2)", background: occasion === o ? "var(--accent-dim)" : "transparent", color: occasion === o ? "var(--accent)" : "var(--text3)", fontSize: 12, fontWeight: 500, cursor: "pointer" }}>{o}</button>
         ))}
       </div>
 
-      {/* Mode tabs */}
       {outfits.length > 0 && (
         <div style={{ display: "flex", gap: 8, marginBottom: 20 }}>
           {[["saved", "Tenues sauvegardées"], ["compose", "Composer"]].map(([v, l]) => (
@@ -220,11 +221,10 @@ export default function TodayPage() {
       {loading ? (
         <div style={{ display: "flex", justifyContent: "center", padding: "40px 0" }}><div className="spinner" style={{ width: 28, height: 28 }} /></div>
       ) : mode === "saved" ? (
-        // ── SAVED MODE ──
         <div>
           {filteredOutfits.length === 0 ? (
             <div style={{ textAlign: "center", padding: "40px 0", color: "var(--text3)" }}>
-              <div style={{ fontSize: 13, marginBottom: 12 }}>Aucune tenue sauvegardée disponible</div>
+              <div style={{ fontSize: 13, marginBottom: 12 }}>Aucune tenue sauvegardée pour cette occasion</div>
               <button onClick={() => setMode("compose")} className="btn btn-primary">Composer une tenue</button>
             </div>
           ) : (
@@ -232,28 +232,33 @@ export default function TodayPage() {
               {filteredOutfits.map(outfit => {
                 const outfitItems = (outfit.item_ids || []).map(id => items.find(i => i.id === id)).filter(Boolean);
                 const isSelected = selectedOutfit?.id === outfit.id;
+                const occasions = outfit.occasions?.length ? outfit.occasions : (outfit.occasion ? [outfit.occasion] : []);
                 return (
-                  <div key={outfit.id} onClick={() => { setSelectedOutfit(isSelected ? null : outfit); setLogged(false); setSaved(false); }} className="card" style={{ padding: "14px", cursor: "pointer", border: "1px solid " + (isSelected ? "var(--accent-border)" : "var(--border)"), background: isSelected ? "var(--accent-dim)" : "var(--bg2)", transition: "all 0.15s" }}>
+                  <div key={outfit.id} onClick={() => { setSelectedOutfit(isSelected ? null : outfit); setLogged(false); }} className="card" style={{ padding: "14px", cursor: "pointer", border: "1px solid " + (isSelected ? "var(--accent-border)" : "var(--border)"), background: isSelected ? "var(--accent-dim)" : "var(--bg2)", transition: "all 0.15s" }}>
                     <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 8 }}>
                       <div>
                         <div style={{ fontFamily: "Fraunces", fontSize: 15, fontWeight: 300 }}>{outfit.name}</div>
-                        <div style={{ fontSize: 11, color: "var(--text3)" }}>{outfit.occasion} · Porté {outfit.times_worn}x</div>
+                        <div style={{ display: "flex", gap: 4, flexWrap: "wrap", marginTop: 4 }}>
+                          {occasions.map(occ => (
+                            <span key={occ} style={{ fontSize: 10, background: "var(--bg3)", color: "var(--text3)", borderRadius: 6, padding: "2px 7px" }}>{occ}</span>
+                          ))}
+                        </div>
                       </div>
                       {outfit.is_favorite && <span style={{ fontSize: 16 }}>⭐</span>}
                     </div>
                     <div style={{ display: "flex", gap: 6 }}>
                       {outfitItems.slice(0, 5).map(item => (
-                        <div key={item.id} style={{ width: 44, height: 58, borderRadius: 8, overflow: "hidden", background: "var(--bg3)", flexShrink: 0 }}>
-                          {item.image_url ? <img src={item.image_url} alt={item.name} style={{ width: "100%", height: "100%", objectFit: "cover" }} /> : <div style={{ display: "flex", alignItems: "center", justifyContent: "center", height: "100%", fontSize: 16 }}>👔</div>}
+                        <div key={item.id} style={{ width: 56, height: 74, borderRadius: 8, overflow: "hidden", background: "var(--bg3)", flexShrink: 0 }}>
+                          {item.image_url ? <img src={item.image_url} alt={item.name} style={{ width: "100%", height: "100%", objectFit: "cover" }} /> : <div style={{ display: "flex", alignItems: "center", justifyContent: "center", height: "100%", fontSize: 18 }}>👔</div>}
                         </div>
                       ))}
                     </div>
                     {isSelected && (
-                      <div style={{ marginTop: 12, display: "flex", gap: 8 }}>
+                      <div style={{ marginTop: 12 }}>
                         {logged ? (
-                          <div style={{ flex: 1, textAlign: "center", padding: "10px", background: "rgba(110,231,183,0.08)", border: "1px solid rgba(110,231,183,0.2)", borderRadius: 10, color: "var(--green)", fontSize: 13 }}>✓ Enregistré !</div>
+                          <div style={{ textAlign: "center", padding: "10px", background: "rgba(110,231,183,0.08)", border: "1px solid rgba(110,231,183,0.2)", borderRadius: 10, color: "var(--green)", fontSize: 13 }}>✓ Enregistré !</div>
                         ) : (
-                          <button onClick={e => { e.stopPropagation(); wearToday(outfit); }} className="btn btn-primary" style={{ flex: 1, padding: "10px" }}>Je porte ça aujourd'hui</button>
+                          <button onClick={e => { e.stopPropagation(); wearToday(outfit); }} className="btn btn-primary" style={{ width: "100%", padding: "10px" }}>Je porte ça aujourd'hui</button>
                         )}
                       </div>
                     )}
@@ -264,10 +269,8 @@ export default function TodayPage() {
           )}
         </div>
       ) : (
-        // ── COMPOSE MODE ──
         <div>
           {!startCategory ? (
-            // Choisir par quelle pièce commencer
             <div>
               <div style={{ fontFamily: "Fraunces", fontSize: 16, fontWeight: 300, marginBottom: 12 }}>Par quelle pièce tu commences ?</div>
               <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
@@ -288,14 +291,13 @@ export default function TodayPage() {
             </div>
           ) : (
             <div>
-              {/* Pièces sélectionnées */}
               {composePieces.length > 0 && (
                 <div style={{ marginBottom: 16 }}>
                   <div style={{ fontSize: 12, color: "var(--text2)", marginBottom: 8, fontWeight: 500, textTransform: "uppercase", letterSpacing: "0.05em" }}>Ma tenue</div>
                   <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
                     {composePieces.map(([cat, item]) => (
                       <div key={cat} style={{ position: "relative" }}>
-                        <div style={{ width: 64, height: 84, borderRadius: 10, overflow: "hidden", background: "var(--bg3)", border: "2px solid var(--accent)" }}>
+                        <div style={{ width: 72, height: 96, borderRadius: 10, overflow: "hidden", background: "var(--bg3)", border: "2px solid var(--accent)" }}>
                           {item.image_url ? <img src={item.image_url} alt={item.name} style={{ width: "100%", height: "100%", objectFit: "cover" }} /> : <div style={{ display: "flex", alignItems: "center", justifyContent: "center", height: "100%", fontSize: 24 }}>{CAT_ICONS[cat]}</div>}
                         </div>
                         <button onClick={() => { removePiece(cat); setCurrentCategory(cat); }} style={{ position: "absolute", top: -6, right: -6, width: 20, height: 20, borderRadius: "50%", background: "var(--red)", border: "none", color: "#fff", fontSize: 11, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}>✕</button>
@@ -306,7 +308,6 @@ export default function TodayPage() {
                 </div>
               )}
 
-              {/* Catégorie en cours */}
               {currentCategory && (
                 <div style={{ marginBottom: 16 }}>
                   <div style={{ fontSize: 13, color: "var(--text2)", marginBottom: 8 }}>
@@ -319,10 +320,10 @@ export default function TodayPage() {
                     <div style={{ display: "flex", gap: 8, overflowX: "auto", paddingBottom: 8 }}>
                       {getCompatibleItems(currentCategory).map(item => (
                         <div key={item.id} onClick={() => selectPiece(currentCategory, item)} style={{ flexShrink: 0, cursor: "pointer" }}>
-                          <div style={{ width: 80, height: 104, borderRadius: 10, overflow: "hidden", background: "var(--bg3)", border: "2px solid " + (selectedPieces[currentCategory]?.id === item.id ? "var(--accent)" : "var(--border)"), transition: "all 0.15s" }}>
-                            {item.image_url ? <img src={item.image_url} alt={item.name} style={{ width: "100%", height: "100%", objectFit: "cover" }} /> : <div style={{ display: "flex", alignItems: "center", justifyContent: "center", height: "100%", fontSize: 28 }}>{CAT_ICONS[item.category]}</div>}
+                          <div style={{ width: 96, height: 126, borderRadius: 10, overflow: "hidden", background: "var(--bg3)", border: "2px solid " + (selectedPieces[currentCategory]?.id === item.id ? "var(--accent)" : "var(--border)"), transition: "all 0.15s" }}>
+                            {item.image_url ? <img src={item.image_url} alt={item.name} style={{ width: "100%", height: "100%", objectFit: "cover" }} /> : <div style={{ display: "flex", alignItems: "center", justifyContent: "center", height: "100%", fontSize: 32 }}>{CAT_ICONS[item.category]}</div>}
                           </div>
-                          <div style={{ fontSize: 10, color: "var(--text2)", textAlign: "center", marginTop: 4, maxWidth: 80, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{item.name}</div>
+                          <div style={{ fontSize: 10, color: "var(--text2)", textAlign: "center", marginTop: 4, maxWidth: 96, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{item.name}</div>
                         </div>
                       ))}
                     </div>
@@ -330,7 +331,6 @@ export default function TodayPage() {
                 </div>
               )}
 
-              {/* Ajouter une autre catégorie */}
               {composePieces.length > 0 && (
                 <div style={{ marginBottom: 16 }}>
                   <div style={{ fontSize: 12, color: "var(--text3)", marginBottom: 8 }}>Ajouter une autre pièce :</div>
@@ -344,7 +344,6 @@ export default function TodayPage() {
                 </div>
               )}
 
-              {/* Actions */}
               {hasEnoughPieces && (
                 <div style={{ display: "flex", flexDirection: "column", gap: 8, marginTop: 8 }}>
                   {logged ? (
@@ -364,6 +363,79 @@ export default function TodayPage() {
           )}
         </div>
       )}
+
+      {saveModalOpen && (
+        <SaveOutfitModal
+          pieces={Object.values(selectedPieces)}
+          onConfirm={confirmSaveOutfit}
+          onCancel={() => setSaveModalOpen(false)}
+        />
+      )}
+    </div>
+  );
+}
+
+function SaveOutfitModal({ pieces, onConfirm, onCancel }) {
+  const [name, setName] = useState("");
+  const [occasions, setOccasions] = useState([]);
+  const [saving, setSaving] = useState(false);
+  const OCCASIONS = ["Casual", "Bureau", "Sport", "Soiree", "Weekend", "Voyage"];
+  const CAT_ICONS = { Hauts: "👕", Bas: "👖", Vestes: "🧥", Chaussures: "👟", Ceintures: "👜", Accessoires: "🕶️", Sport: "🏃" };
+
+  function toggle(occ) {
+    setOccasions(prev => prev.includes(occ) ? prev.filter(o => o !== occ) : [...prev, occ]);
+  }
+
+  async function save() {
+    if (!name.trim() || occasions.length === 0) return;
+    setSaving(true);
+    await onConfirm(name, occasions);
+    setSaving(false);
+  }
+
+  return (
+    <div style={{ position: "fixed", inset: 0, zIndex: 200, background: "rgba(0,0,0,0.85)", backdropFilter: "blur(4px)", display: "flex", alignItems: "flex-end" }} onClick={onCancel}>
+      <div onClick={e => e.stopPropagation()} style={{ background: "var(--bg2)", borderRadius: "20px 20px 0 0", border: "1px solid var(--border)", width: "100%", maxHeight: "85dvh", overflowY: "auto", padding: "20px" }}>
+        <div style={{ width: 40, height: 4, borderRadius: 2, background: "var(--border2)", margin: "0 auto 16px" }} />
+        <div style={{ fontFamily: "Fraunces", fontSize: 18, fontWeight: 300, marginBottom: 16 }}>Sauvegarder la tenue</div>
+
+        <div style={{ display: "flex", gap: 8, marginBottom: 16 }}>
+          {pieces.slice(0, 5).map((item, i) => (
+            <div key={i} style={{ width: 56, height: 74, borderRadius: 10, overflow: "hidden", background: "var(--bg3)", flexShrink: 0 }}>
+              {item.image_url ? <img src={item.image_url} alt={item.name} style={{ width: "100%", height: "100%", objectFit: "cover" }} /> : <div style={{ display: "flex", alignItems: "center", justifyContent: "center", height: "100%", fontSize: 22 }}>{CAT_ICONS[item.category] || "👔"}</div>}
+            </div>
+          ))}
+        </div>
+
+        <div style={{ marginBottom: 16 }}>
+          <div style={{ fontSize: 13, color: "var(--text2)", marginBottom: 8 }}>Nom de la tenue</div>
+          <input
+            placeholder='Ex: "Look bureau chic", "Weekend décontracté"...'
+            value={name}
+            onChange={e => setName(e.target.value)}
+            autoFocus
+          />
+        </div>
+
+        <div style={{ marginBottom: 20 }}>
+          <div style={{ fontSize: 13, color: "var(--text2)", marginBottom: 8 }}>Occasions (plusieurs possibles)</div>
+          <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+            {OCCASIONS.map(occ => (
+              <button key={occ} onClick={() => toggle(occ)} style={{ padding: "8px 16px", borderRadius: 20, border: "1px solid", borderColor: occasions.includes(occ) ? "var(--accent)" : "var(--border2)", background: occasions.includes(occ) ? "var(--accent-dim)" : "transparent", color: occasions.includes(occ) ? "var(--accent)" : "var(--text3)", fontSize: 13, cursor: "pointer", transition: "all 0.15s" }}>
+                {occasions.includes(occ) ? "✓ " : ""}{occ}
+              </button>
+            ))}
+          </div>
+          {occasions.length === 0 && <div style={{ fontSize: 11, color: "var(--red)", marginTop: 6 }}>Sélectionne au moins une occasion</div>}
+        </div>
+
+        <div style={{ display: "flex", gap: 8 }}>
+          <button onClick={onCancel} className="btn btn-ghost" style={{ flex: 1, padding: "12px" }}>Annuler</button>
+          <button onClick={save} disabled={saving || !name.trim() || occasions.length === 0} className="btn btn-primary" style={{ flex: 2, padding: "12px" }}>
+            {saving ? <span className="spinner" style={{ width: 16, height: 16 }} /> : "Sauvegarder"}
+          </button>
+        </div>
+      </div>
     </div>
   );
 }
